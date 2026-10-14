@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esporta Classifica - First Encounter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1428 100%);
+            color: #00ffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(10, 14, 39, 0.9);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #00ffff;
+        }
+
+        .info {
+            color: #00cccc;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .stats {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00cccc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .stat-label {
+            color: #00cccc;
+        }
+
+        .stat-value {
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #9d4edd 0%, #7209b7 100%);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #7209b7 0%, #5a0896 100%);
+            box-shadow: 0 0 20px rgba(157, 78, 221, 0.7);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .error {
+            color: #ff3366;
+            margin-top: 20px;
+        }
+
+        .success {
+            color: #00ff00;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📥 Esporta Classifica</h1>
+        <div class="info">
+            Genera un file HTML completamente statico con tutti i punteggi incorporati, pronto da condividere.
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-item">
+                <span class="stat-label">Punteggi totali:</span>
+                <span class="stat-value" id="totalScores">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Punteggi oggi:</span>
+                <span class="stat-value" id="todayScores">-</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Data:</span>
+                <span class="stat-value" id="currentDate">-</span>
+            </div>
+        </div>
+
+        <button onclick="exportClientPage()">🚀 Esporta Pagina Client</button>
+
+        <div id="message"></div>
+    </div>
+
+    <script>
+        // Ottieni la data di oggi
+        function getTodayDate() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
+
+        // Formatta la data
+        function formatDate(dateString) {
+            const date = new Date(dateString + 'T00:00:00');
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('it-IT', options);
+        }
+
+        // Carica statistiche
+        function loadStats() {
+            const saved = localStorage.getItem('firstEncounterScores');
+            if (!saved) {
+                document.getElementById('totalScores').textContent = '0';
+                document.getElementById('todayScores').textContent = '0';
+                document.getElementById('currentDate').textContent = formatDate(getTodayDate());
+                return;
+            }
+
+            const scores = JSON.parse(saved);
+            const today = getTodayDate();
+            const todayScores = scores.filter(s => s.date === today);
+
+            document.getElementById('totalScores').textContent = scores.length;
+            document.getElementById('todayScores').textContent = todayScores.length;
+            document.getElementById('currentDate').textContent = formatDate(today);
+        }
+
+        // Esporta la pagina client
+        function exportClientPage() {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = '';
+
+            const saved = localStorage.getItem('firstEncounterScores');
+            if (!saved) {
+                messageDiv.innerHTML = '<div class="error">⚠️ Nessun punteggio da esportare!</div>';
+                return;
+            }
+
+            const scores = JSON.parse(saved);
+            const today = getTodayDate();
+            const formattedDate = formatDate(today);
+
+            // Genera il file HTML
+            const html = generateClientHTML(scores, today, formattedDate);
+
+            // Scarica il file
+            const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'first-encounter-classifica-' + today + '.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            messageDiv.innerHTML = '<div class="success">✅ File esportato con successo!</div>';
+        }
+
+        // Genera l'HTML della pagina client
+        function generateClientHTML(scores, today, formattedDate) {
+            const scoresJSON = JSON.stringify(scores, null, 4);
+
+            return `<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Encounter - Classifica del ${formattedDate}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1428 100%);
+            color: #00ffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 255, 0.03) 2px, rgba(0, 255, 255, 0.03) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 255, 255, 0.03) 2px, rgba(0, 255, 255, 0.03) 4px);
+            pointer-events: none;
+            animation: scanline 8s linear infinite;
+        }
+        @keyframes scanline { 0% { transform: translateY(0); } 100% { transform: translateY(100%); } }
+        .container {
+            background: rgba(10, 14, 39, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
+            to { text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 50px #00ffff; }
+        }
+        .subtitle { text-align: center; color: #00cccc; margin-bottom: 30px; font-size: 1.1em; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
+        .tab {
+            padding: 12px 30px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00cccc;
+            border-radius: 5px;
+            color: #00cccc;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .tab:hover { background: rgba(0, 255, 255, 0.2); border-color: #00ffff; }
+        .tab.active {
+            background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
+            color: #0a0e27;
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        .scoreboard { margin-top: 20px; }
+        .scoreboard-section { display: none; }
+        .scoreboard-section.active { display: block; }
+        .section-title {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        .today-date { text-align: center; color: #00cccc; margin-bottom: 15px; font-size: 0.9em; }
+        .scoreboard-header {
+            display: grid;
+            grid-template-columns: 80px 1fr 150px;
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            border: 1px solid #00ffff;
+        }
+        .score-item {
+            display: grid;
+            grid-template-columns: 80px 1fr 150px;
+            padding: 15px 10px;
+            background: rgba(0, 255, 255, 0.03);
+            border: 1px solid #00cccc;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+        .score-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+        .position { font-size: 1.5em; font-weight: bold; text-align: center; }
+        .position-1 { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+        .position-2 { color: #c0c0c0; text-shadow: 0 0 10px #c0c0c0; }
+        .position-3 { color: #cd7f32; text-shadow: 0 0 10px #cd7f32; }
+        .empty-state { text-align: center; padding: 40px; color: #006666; font-size: 1.2em; }
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8em; }
+            .scoreboard-header, .score-item { grid-template-columns: 60px 1fr 120px; font-size: 0.9em; }
+            .tabs { flex-direction: row; width: 100%; }
+            .tab { flex: 1; padding: 10px 15px; font-size: 0.9em; }
+            .section-title { font-size: 1.2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 FIRST ENCOUNTER</h1>
+        <div class="subtitle">Classifica Punteggi VR</div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('today')">📅 Oggi</div>
+            <div class="tab" onclick="switchTab('global')">🌍 Globale</div>
+        </div>
+        <div class="scoreboard">
+            <div id="todaySection" class="scoreboard-section active">
+                <div class="section-title">🏆 Classifica di Oggi</div>
+                <div class="today-date">${formattedDate}</div>
+                <div class="scoreboard-header">
+                    <div>Pos.</div>
+                    <div>Nome</div>
+                    <div>Punteggio</div>
+                </div>
+                <div id="todayScoreList"></div>
+            </div>
+            <div id="globalSection" class="scoreboard-section">
+                <div class="section-title">🌟 Classifica Globale</div>
+                <div class="scoreboard-header">
+                    <div>Pos.</div>
+                    <div>Nome</div>
+                    <div>Punteggio</div>
+                </div>
+                <div id="globalScoreList"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const scores = ${scoresJSON};
+        function getTodayDate() { return '${today}'; }
+        function getTodayScores() {
+            const today = getTodayDate();
+            return scores.filter(score => score.date === today);
+        }
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.scoreboard-section').forEach(s => s.classList.remove('active'));
+            if (tab === 'today') {
+                document.getElementById('todaySection').classList.add('active');
+            } else {
+                document.getElementById('globalSection').classList.add('active');
+            }
+        }
+        function renderScoreList(scoreArray, listElementId, isGlobalList) {
+            const scoreList = document.getElementById(listElementId);
+            if (scoreArray.length === 0) {
+                const message = isGlobalList ? 'Nessun punteggio registrato.<br>🚀' : 'Nessun punteggio registrato oggi.<br>🚀';
+                scoreList.innerHTML = '<div class="empty-state">' + message + '</div>';
+                return;
+            }
+            const sortedScores = scoreArray.slice().sort((a, b) => b.score - a.score);
+            scoreList.innerHTML = sortedScores.map((item, idx) => {
+                const posClass = idx === 0 ? 'position-1' : idx === 1 ? 'position-2' : idx === 2 ? 'position-3' : '';
+                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
+                return '<div class="score-item">' +
+                    '<div class="position ' + posClass + '">' + medal + ' ' + (idx + 1) + '</div>' +
+                    '<div>' + item.name + '</div>' +
+                    '<div style="font-weight: bold; font-size: 1.2em;">' + item.score.toLocaleString() + '</div>' +
+                    '</div>';
+            }).join('');
+        }
+        function renderScores() {
+            const todayScores = getTodayScores();
+            renderScoreList(todayScores, 'todayScoreList', false);
+            renderScoreList(scores, 'globalScoreList', true);
+        }
+        renderScores();
+    </script>
+</body>
+</html>`;
+        }
+
+        // Carica le statistiche all'avvio
+        loadStats();
+    </script>
+</body>
+</html>

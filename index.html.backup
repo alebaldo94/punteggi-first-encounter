@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Encounters - Classifica Punteggi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1428 100%);
+            color: #00ffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 255, 0.03) 2px, rgba(0, 255, 255, 0.03) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 255, 255, 0.03) 2px, rgba(0, 255, 255, 0.03) 4px);
+            pointer-events: none;
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100%); }
+        }
+
+        .container {
+            background: rgba(10, 14, 39, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5),
+                        inset 0 0 20px rgba(0, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
+            to { text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 50px #00ffff; }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #00cccc;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid #00cccc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #00ffff;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        input::placeholder {
+            color: #006666;
+        }
+
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
+            border: none;
+            border-radius: 5px;
+            color: #0a0e27;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #00cccc 0%, #009999 100%);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-cancel {
+            background: linear-gradient(135deg, #ff3366 0%, #cc0033 100%);
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background: linear-gradient(135deg, #cc0033 0%, #990033 100%);
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.7);
+        }
+
+        .scoreboard {
+            margin-top: 20px;
+        }
+
+        .scoreboard-header {
+            display: grid;
+            grid-template-columns: 60px 1fr 120px 100px;
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            border: 1px solid #00ffff;
+        }
+
+        .score-item {
+            display: grid;
+            grid-template-columns: 60px 1fr 120px 100px;
+            padding: 15px 10px;
+            background: rgba(0, 255, 255, 0.03);
+            border: 1px solid #00cccc;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .score-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            transform: translateX(5px);
+        }
+
+        .score-item.editing {
+            background: rgba(255, 255, 0, 0.1);
+            border-color: #ffff00;
+        }
+
+        .position {
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .position-1 { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+        .position-2 { color: #c0c0c0; text-shadow: 0 0 10px #c0c0c0; }
+        .position-3 { color: #cd7f32; text-shadow: 0 0 10px #cd7f32; }
+
+        .score-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.8em;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #006666;
+            font-size: 1.2em;
+        }
+
+        .edit-mode {
+            background: rgba(255, 255, 0, 0.1);
+            border-color: #ffff00;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .edit-mode h3 {
+            color: #ffff00;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab {
+            padding: 12px 30px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00cccc;
+            border-radius: 5px;
+            color: #00cccc;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .tab:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
+            color: #0a0e27;
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .scoreboard-section {
+            display: none;
+        }
+
+        .scoreboard-section.active {
+            display: block;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .today-date {
+            text-align: center;
+            color: #00cccc;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8em; }
+            .scoreboard-header,
+            .score-item {
+                grid-template-columns: 50px 1fr 100px 80px;
+                font-size: 0.9em;
+            }
+            .input-group {
+                flex-direction: column;
+            }
+            button { width: 100%; }
+            .tabs {
+                flex-direction: row;
+                width: 100%;
+            }
+            .tab {
+                flex: 1;
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+            .section-title {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 FIRST ENCOUNTERS</h1>
+        <div class="subtitle">Classifica Punteggi VR</div>
+
+        <div class="input-section">
+            <div id="editModeInfo" class="edit-mode" style="display: none;">
+                <h3>✏️ Modalità Modifica</h3>
+                <p>Stai modificando il punteggio. Aggiorna i campi e clicca "Aggiorna Punteggio".</p>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="playerName" placeholder="Nome Giocatore" maxlength="20">
+                <input type="number" id="playerScore" placeholder="Punteggio" min="0">
+                <input type="date" id="playerDate" title="Data del punteggio" style="display: none;">
+            </div>
+            <div class="input-group">
+                <button id="addBtn" onclick="addOrUpdateScore()">➕ Aggiungi Punteggio</button>
+                <button id="cancelBtn" class="btn-cancel" onclick="cancelEdit()" style="display: none;">❌ Annulla</button>
+            </div>
+            <div class="input-group" style="margin-top: 10px;">
+                <button onclick="generateClientPage()" style="background: linear-gradient(135deg, #9d4edd 0%, #7209b7 100%);">📥 Genera Pagina Client</button>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('today')">📅 Oggi</div>
+            <div class="tab" onclick="switchTab('global')">🌍 Globale</div>
+        </div>
+
+        <div class="scoreboard">
+            <!-- Classifica di Oggi -->
+            <div id="todaySection" class="scoreboard-section active">
+                <div class="section-title">🏆 Classifica di Oggi</div>
+                <div class="today-date" id="todayDate"></div>
+                <div class="scoreboard-header">
+                    <div>Pos.</div>
+                    <div>Nome</div>
+                    <div>Punteggio</div>
+                    <div>Azioni</div>
+                </div>
+                <div id="todayScoreList">
+                    <div class="empty-state">
+                        Nessun punteggio registrato oggi.<br>
+                        Inizia ad aggiungere i tuoi primi record! 🚀
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classifica Globale -->
+            <div id="globalSection" class="scoreboard-section">
+                <div class="section-title">🌟 Classifica Globale</div>
+                <div class="scoreboard-header">
+                    <div>Pos.</div>
+                    <div>Nome</div>
+                    <div>Punteggio</div>
+                    <div>Azioni</div>
+                </div>
+                <div id="globalScoreList">
+                    <div class="empty-state">
+                        Nessun punteggio registrato.<br>
+                        Inizia ad aggiungere i tuoi primi record! 🚀
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scores = [];
+        let editingIndex = -1;
+        let currentTab = 'today';
+
+        // Ottieni la data di oggi in formato YYYY-MM-DD
+        function getTodayDate() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
+
+        // Formatta la data in formato leggibile
+        function formatDate(dateString) {
+            const date = new Date(dateString + 'T00:00:00');
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('it-IT', options);
+        }
+
+        // Filtra i punteggi di oggi
+        function getTodayScores() {
+            const today = getTodayDate();
+            return scores.filter(score => score.date === today);
+        }
+
+        // Carica i punteggi dal localStorage
+        function loadScores() {
+            const saved = localStorage.getItem('firstEncounterScores');
+            if (saved) {
+                scores = JSON.parse(saved);
+                // Migra i vecchi punteggi senza data
+                scores = scores.map(score => {
+                    if (!score.date) {
+                        return { ...score, date: getTodayDate() };
+                    }
+                    return score;
+                });
+                sortScores();
+                renderScores();
+            }
+            // Mostra la data di oggi
+            document.getElementById('todayDate').textContent = formatDate(getTodayDate());
+        }
+
+        // Salva i punteggi nel localStorage
+        function saveScores() {
+            localStorage.setItem('firstEncounterScores', JSON.stringify(scores));
+        }
+
+        // Ordina i punteggi in ordine decrescente
+        function sortScores() {
+            scores.sort((a, b) => b.score - a.score);
+        }
+
+        // Cambia tab
+        function switchTab(tab) {
+            currentTab = tab;
+
+            // Aggiorna i bottoni dei tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Aggiorna le sezioni
+            document.querySelectorAll('.scoreboard-section').forEach(s => s.classList.remove('active'));
+            if (tab === 'today') {
+                document.getElementById('todaySection').classList.add('active');
+            } else {
+                document.getElementById('globalSection').classList.add('active');
+            }
+        }
+
+        // Renderizza una lista di punteggi
+        function renderScoreList(scoreArray, listElementId, isGlobalList = false) {
+            const scoreList = document.getElementById(listElementId);
+
+            if (scoreArray.length === 0) {
+                const message = isGlobalList
+                    ? 'Nessun punteggio registrato.<br>Inizia ad aggiungere i tuoi primi record! 🚀'
+                    : 'Nessun punteggio registrato oggi.<br>Inizia ad aggiungere i tuoi primi record! 🚀';
+                scoreList.innerHTML = `<div class="empty-state">${message}</div>`;
+                return;
+            }
+
+            // Ordina la copia dell'array
+            const sortedScores = [...scoreArray].sort((a, b) => b.score - a.score);
+
+            scoreList.innerHTML = sortedScores.map((item, displayIndex) => {
+                // Trova l'indice originale nell'array scores globale
+                const originalIndex = scores.findIndex(s =>
+                    s.name === item.name &&
+                    s.score === item.score &&
+                    s.date === item.date
+                );
+
+                const posClass = displayIndex === 0 ? 'position-1' : displayIndex === 1 ? 'position-2' : displayIndex === 2 ? 'position-3' : '';
+                const medal = displayIndex === 0 ? '🥇' : displayIndex === 1 ? '🥈' : displayIndex === 2 ? '🥉' : '';
+
+                return `
+                    <div class="score-item ${editingIndex === originalIndex ? 'editing' : ''}" onclick="selectScore(${originalIndex})">
+                        <div class="position ${posClass}">${medal} ${displayIndex + 1}</div>
+                        <div>${item.name}</div>
+                        <div style="font-weight: bold; font-size: 1.2em;">${item.score.toLocaleString()}</div>
+                        <div class="score-actions">
+                            <button class="btn-small" onclick="event.stopPropagation(); editScore(${originalIndex})">✏️</button>
+                            <button class="btn-small btn-cancel" onclick="event.stopPropagation(); deleteScore(${originalIndex})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Renderizza tutte le liste dei punteggi
+        function renderScores() {
+            const todayScores = getTodayScores();
+            renderScoreList(todayScores, 'todayScoreList', false);
+            renderScoreList(scores, 'globalScoreList', true);
+        }
+
+        // Aggiungi o aggiorna punteggio
+        function addOrUpdateScore() {
+            const name = document.getElementById('playerName').value.trim();
+            const score = parseInt(document.getElementById('playerScore').value);
+            const dateInput = document.getElementById('playerDate').value;
+            const date = dateInput || getTodayDate(); // Usa la data inserita o oggi se vuoto
+
+            if (!name) {
+                alert('⚠️ Inserisci il nome del giocatore!');
+                return;
+            }
+
+            if (isNaN(score) || score < 0) {
+                alert('⚠️ Inserisci un punteggio valido!');
+                return;
+            }
+
+            if (editingIndex >= 0) {
+                // Modalità modifica - aggiorna tutti i campi inclusa la data
+                scores[editingIndex].name = name;
+                scores[editingIndex].score = score;
+                scores[editingIndex].date = date;
+                editingIndex = -1;
+                document.getElementById('editModeInfo').style.display = 'none';
+                document.getElementById('addBtn').textContent = '➕ Aggiungi Punteggio';
+                document.getElementById('cancelBtn').style.display = 'none';
+                document.getElementById('playerDate').style.display = 'none'; // Nascondi il campo data
+            } else {
+                // Modalità aggiungi
+                scores.push({ name, score, date });
+            }
+
+            sortScores();
+            saveScores();
+            renderScores();
+
+            // Reset form
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerScore').value = '';
+            document.getElementById('playerDate').value = '';
+            document.getElementById('playerName').focus();
+        }
+
+        // Modifica punteggio
+        function editScore(index) {
+            editingIndex = index;
+            const score = scores[index];
+
+            document.getElementById('playerName').value = score.name;
+            document.getElementById('playerScore').value = score.score;
+            document.getElementById('playerDate').value = score.date || getTodayDate();
+            document.getElementById('playerDate').style.display = 'block'; // Mostra il campo data
+            document.getElementById('editModeInfo').style.display = 'block';
+            document.getElementById('addBtn').textContent = '💾 Aggiorna Punteggio';
+            document.getElementById('cancelBtn').style.display = 'inline-block';
+            document.getElementById('playerName').focus();
+
+            renderScores();
+        }
+
+        // Seleziona punteggio (click sulla riga)
+        function selectScore(index) {
+            editScore(index);
+        }
+
+        // Annulla modifica
+        function cancelEdit() {
+            editingIndex = -1;
+            document.getElementById('playerName').value = '';
+            document.getElementById('playerScore').value = '';
+            document.getElementById('playerDate').value = '';
+            document.getElementById('playerDate').style.display = 'none'; // Nascondi il campo data
+            document.getElementById('editModeInfo').style.display = 'none';
+            document.getElementById('addBtn').textContent = '➕ Aggiungi Punteggio';
+            document.getElementById('cancelBtn').style.display = 'none';
+            renderScores();
+        }
+
+        // Elimina punteggio
+        function deleteScore(index) {
+            const score = scores[index];
+            if (confirm(`🗑️ Vuoi davvero eliminare il punteggio di ${score.name} (${score.score} punti)?`)) {
+                scores.splice(index, 1);
+                if (editingIndex === index) {
+                    cancelEdit();
+                }
+                saveScores();
+                renderScores();
+            }
+        }
+
+        // Genera pagina client statica
+        function generateClientPage() {
+            if (scores.length === 0) {
+                alert('⚠️ Non ci sono punteggi da esportare!');
+                return;
+            }
+
+            const today = getTodayDate();
+            const formattedDate = formatDate(today);
+            const scoresJSON = JSON.stringify(scores, null, 4);
+
+            // Template HTML della pagina client con dati incorporati
+            const clientHTML = '<!DOCTYPE html>\n' +
+'<html lang="it">\n' +
+'<head>\n' +
+'    <meta charset="UTF-8">\n' +
+'    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+'    <title>First Encounter - Classifica del ' + formattedDate + '</title>\n' +
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1428 100%);
+            color: #00ffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 255, 0.03) 2px, rgba(0, 255, 255, 0.03) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 255, 255, 0.03) 2px, rgba(0, 255, 255, 0.03) 4px);
+            pointer-events: none;
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100%); }
+        }
+
+        .container {
+            background: rgba(10, 14, 39, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5),
+                        inset 0 0 20px rgba(0, 255, 255, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #00ffff, 0 0 30px #00ffff;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
+            to { text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff, 0 0 50px #00ffff; }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #00cccc;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .scoreboard {
+            margin-top: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .tab {
+            padding: 12px 30px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00cccc;
+            border-radius: 5px;
+            color: #00cccc;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .tab:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #00ffff 0%, #00cccc 100%);
+            color: #0a0e27;
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .scoreboard-section {
+            display: none;
+        }
+
+        .scoreboard-section.active {
+            display: block;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .today-date {
+            text-align: center;
+            color: #00cccc;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+
+        .scoreboard-header {
+            display: grid;
+            grid-template-columns: 80px 1fr 150px;
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            border: 1px solid #00ffff;
+        }
+
+        .score-item {
+            display: grid;
+            grid-template-columns: 80px 1fr 150px;
+            padding: 15px 10px;
+            background: rgba(0, 255, 255, 0.03);
+            border: 1px solid #00cccc;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+
+        .score-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .position {
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .position-1 { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+        .position-2 { color: #c0c0c0; text-shadow: 0 0 10px #c0c0c0; }
+        .position-3 { color: #cd7f32; text-shadow: 0 0 10px #cd7f32; }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #006666;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8em; }
+            .scoreboard-header,
+            .score-item {
+                grid-template-columns: 60px 1fr 120px;
+                font-size: 0.9em;
+            }
+            .tabs {
+                flex-direction: row;
+                width: 100%;
+            }
+            .tab {
+                flex: 1;
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+            .section-title {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 FIRST ENCOUNTER</h1>
+        <div class="subtitle">Classifica Punteggi VR</div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('today')">📅 Oggi</div>
+            <div class="tab" onclick="switchTab('global')">🌍 Globale</div>
+        </div>
+
+        <div class="scoreboard">
+            <div id="todaySection" class="scoreboard-section active">
+                <div class="section-title">🏆 Classifica di Oggi</div>
+                <div class="today-date">${formattedDate}</div>
+                <div class="scoreboard-header">
+                    <div>Pos.</div>
+                    <div>Nome</div>
+                    <div>Punteggio</div>
+                </div>
+                <div id="todayScoreList"></div>
+            </div>
+
+            <div id="globalSection" class="scoreboard-section">
+                <div class="section-title">🌟 Classifica Globale</div>
+                <div class="scoreboard-header">
+                    <div>Pos.</div>
+                    <div>Nome</div>
+                    <div>Punteggio</div>
+                </div>
+                <div id="globalScoreList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dati incorporati al momento della generazione
+        const scores = ${JSON.stringify(scores, null, 8)};
+
+        // Ottieni la data di oggi in formato YYYY-MM-DD
+        function getTodayDate() {
+            return '${today}';
+        }
+
+        // Filtra i punteggi di oggi
+        function getTodayScores() {
+            const today = getTodayDate();
+            return scores.filter(score => score.date === today);
+        }
+
+        // Cambia tab
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.querySelectorAll('.scoreboard-section').forEach(s => s.classList.remove('active'));
+            if (tab === 'today') {
+                document.getElementById('todaySection').classList.add('active');
+            } else {
+                document.getElementById('globalSection').classList.add('active');
+            }
+        }
+
+        // Renderizza una lista di punteggi
+        function renderScoreList(scoreArray, listElementId, isGlobalList = false) {
+            const scoreList = document.getElementById(listElementId);
+
+            if (scoreArray.length === 0) {
+                const message = isGlobalList
+                    ? 'Nessun punteggio registrato.<br>🚀'
+                    : 'Nessun punteggio registrato oggi.<br>🚀';
+                scoreList.innerHTML = '<div class="empty-state">' + message + '</div>';
+                return;
+            }
+
+            const sortedScores = [...scoreArray].sort((a, b) => b.score - a.score);
+
+            scoreList.innerHTML = sortedScores.map((item, displayIndex) => {
+                const posClass = displayIndex === 0 ? 'position-1' : displayIndex === 1 ? 'position-2' : displayIndex === 2 ? 'position-3' : '';
+                const medal = displayIndex === 0 ? '🥇' : displayIndex === 1 ? '🥈' : displayIndex === 2 ? '🥉' : '';
+
+                return '<div class="score-item">' +
+                    '<div class="position ' + posClass + '">' + medal + ' ' + (displayIndex + 1) + '</div>' +
+                    '<div>' + item.name + '</div>' +
+                    '<div style="font-weight: bold; font-size: 1.2em;">' + item.score.toLocaleString() + '</div>' +
+                    '</div>';
+            }).join('');
+        }
+
+        // Renderizza tutte le liste dei punteggi
+        function renderScores() {
+            const todayScores = getTodayScores();
+            renderScoreList(todayScores, 'todayScoreList', false);
+            renderScoreList(scores, 'globalScoreList', true);
+        }
+
+        // Carica i punteggi all'avvio
+        renderScores();
+    </script>
+</body>
+</html>`;
+
+            // Crea il blob e scarica il file
+            const blob = new Blob([clientHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = \`first-encounter-classifica-\${today}.html\`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('✅ Pagina client generata e scaricata!\\nPuoi condividere questo file HTML con chiunque.');
+        }
+
+        // Gestione Enter per aggiungere punteggio
+        document.getElementById('playerName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('playerScore').focus();
+            }
+        });
+
+        document.getElementById('playerScore').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addOrUpdateScore();
+            }
+        });
+
+        // Carica i punteggi all'avvio
+        loadScores();
+    </script>
+</body>
+</html>
